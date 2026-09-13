@@ -29,11 +29,14 @@ python -m venv venv
 
 # instalar dependências
 pip install -r requirements.txt
+
+# executar a coleta
+python coleta.py
 ```
 
 ## Princípios do projeto
 
-- **Sem lookahead bias**: nenhuma feature ou rótulo usa informação que não estaria disponível no momento real da decisão.
+- **Sem lookahead bias**: as features usam somente informações disponíveis até o instante da previsão. Os rótulos representam resultados futuros observados no histórico; em cada etapa walk-forward, o treinamento usa apenas exemplos cujos rótulos já seriam conhecidos até a data de corte. O pré-processamento é ajustado apenas nos dados de treino.
 - **Validação honesta**: divisão de treino/teste respeita a ordem temporal (walk-forward), nunca split aleatório.
 - **Modelo simples primeiro**: só se justifica Deep Learning depois de esgotar e comparar com baselines mais simples (ex.: Random Forest, XGBoost).
 - **Resultados documentados com limitações**, não vendidos como solução pronta.
