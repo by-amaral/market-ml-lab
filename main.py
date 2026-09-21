@@ -2,7 +2,8 @@ import ccxt
 
 from coleta import buscar_historico, criar_corretora, listar_corretoras, listar_mercados
 from validacao import verificar_dados
-from preparacao import adicionar_features
+from preparacao import adicionar_features, adicionar_alvo
+from treinamento import mostrar_resultados, salvar_resultados, treinar_avaliar
 
 CORRETORAS_ALVO = ["bybit"]
 PARES_ALVO = ["BTC/BRL", "BTC/USDT"]
@@ -10,6 +11,7 @@ INTERVALO = "1h"
 QUANTIDADE = 500
 DATA_INICIO = "2026-08-01T00:00:00Z"
 DATA_FIM = "2026-09-01T00:00:00Z"
+PAR_TREINAMENTO = "BTC/USDT"
 
 
 def main():
@@ -19,6 +21,8 @@ def main():
     print("Nesta execução, consultaremos:", ", ".join(CORRETORAS_ALVO))
 
     consultas_com_dados = 0
+    treinamentos_concluidos = 0
+    falha_treinamento = False
     for id_corretora in CORRETORAS_ALVO:
         try:
             corretora = criar_corretora(id_corretora)
@@ -67,16 +71,32 @@ def main():
                 print(f"Arquivo salvo: {caminho}")
 
                 dados = adicionar_features(tabela)
+                dados = adicionar_alvo(dados)
                 print(
-                    dados[["timestamp", "fechamento", "retorno_1h", "distancia_media20"]]
-                    .iloc[18:23]
+                    dados[["timestamp", "fechamento", "alvo_alta"]]
+                    .tail(5)
                     .to_string(index=False)
                 )
+
+                if par == PAR_TREINAMENTO:
+                    try:
+                        resultado = treinar_avaliar(tabela, DATA_INICIO, DATA_FIM)
+                        destino = salvar_resultados(resultado)
+                    except (ValueError, OSError) as erro:
+                        falha_treinamento = True
+                        print(f"Falha no treinamento de {id_corretora} / {par}: {erro}")
+                    else:
+                        treinamentos_concluidos += 1
+                        mostrar_resultados(resultado)
+                        print(f"Resultados salvos em: {destino}")
 
     if consultas_com_dados == 0:
         print("Nenhum histórico válido foi salvo; confira as mensagens acima.")
         return 1
-    return 0
+    if treinamentos_concluidos == 0:
+        print(f"Nenhum treinamento concluído para {PAR_TREINAMENTO}.")
+        return 1
+    return 1 if falha_treinamento else 0
 
 
 if __name__ == "__main__":

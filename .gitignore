@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Saídas locais reproduzíveis da coleta e do treinamento
+/*_1h.csv
+/resultados/
